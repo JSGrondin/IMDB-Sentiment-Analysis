@@ -4,6 +4,8 @@ import glob
 import nltk
 import numpy as np
 import math
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
 
 def extract_comments(folder):
     # Set folder:
@@ -30,15 +32,14 @@ def extract_comments(folder):
 
     return commentlist
 
-    # After going trough all the files, print the list of headers
+
+# After going trough all the files, print the list of headers
 negcomments = extract_comments('neg')
 poscomments = extract_comments('pos')
 print(negcomments[10000])
 print(poscomments[10000])
 
 
-"""J'ai repris mes anciennes fonctions de traitement de texte pour pouvoir 
-avancer le reste, on trouvera mieux avec Lemmatize etc. après"""
 def get_word_count(words, words_set):
     word_count = {w: 0 for w in words_set}
     for w in words:
@@ -72,89 +73,104 @@ print(word_160neg)
 print(word_160pos)
 
 
-def bayesprobmatrix(positive, negative, wordlist):
-    matrix = []
+def bayes_training_set(positive, negative, wordlist):
+    # This function is used to create the feature matrix (X) and target vector
+    # (y) for the training set. All features and targets are binary values,
+    # i.e. can only take values 0 or 1. This is a requirement for the
+    # Bernoulli NB model.
+
     num_examples_pos = len(positive)
     num_examples_neg = len(negative)
-    word_found = False  #bool to prevent counting words more than once in
-    # each comment
-    for i in range(len(wordlist)):
-        matrix.append([0, 0])
-    for word in wordlist:
-        for poscom in positive:
-            for w in poscom['text']:
-                if word[0] == w and word_found is False:
-                    word_found = True
-                    matrix[wordlist.index(word)][0] += 1
-            word_found = False
-        for negcom in negative:
-            for w in negcom['text']:
-                if word[0] == w and word_found is False:
-                    word_found = True
-                    matrix[wordlist.index(word)][1] += 1
-            word_found = False
-    bayes = []
-    for b in matrix:    #adding Laplace smoothing
-        bayes.append([(b[0]+1)/(num_examples_neg+2),
-                      (b[1]+1)/(num_examples_pos+2)])
-    return bayes
+    num_features = len(wordlist)
 
-def NaiveBayes(X_train, y_train, X_new):
+    # instantiating X and y, using numpy arrays
+    X = np.zeros((num_examples_neg + num_examples_pos, num_features))
+    y = np.ones(num_examples_neg)
+    y = np.concatenate((y, np.zeros(num_examples_pos)))
+
+    for j, word in enumerate(wordlist):
+        for i, poscom in enumerate(positive):
+            for w in poscom['text']:
+                if word[0] == w:
+                    X[i, j] = 1
+        for i, negcom in enumerate(negative):
+            for w in negcom['text']:
+                if word[0] == w:
+                    X[num_examples_pos + i, j] = 1
+    return X, y
+
+
+def bern_naive_bayes(X_train, y_train, X_new):
     # Inputs:
     # -X_train, a feature matrix (size n x m), which is composed of
     # binary variables (0, 1);
     # -y_train (n), target vector composed of binary variables (0, 1).
-    # -X_new (n x m)
+    # -X_new is a feature matrix (size n2 x m2), which is also composed of
+    # binary variables (0, 1) and for which we want to predict labels using
+    # the newly trained NB model
 
     # Define # of instances and features in X_train for future use
     n = len(X_train)    # number of instances
     m = len(X_train[0]) # number of features
 
     # Instantiate theta. e.g. theta_j1 corresponds to the Pr (x_j =1|y=1)
-    theta = np.zeros((m, 2))
+    theta_mat = np.zeros((m, 2))
 
     # Looping over all instances in feature matrix, for each feature, computing
-    # the prior probability Pr(x_j | y=1) and Pr(x_j | y=0)
-    for j in range(0,m):
-        for i in range(0,n):
-            if X_train[i][j] == 1 and y_train[i] == 1:
-                theta[j,1] += 1
-            elif X_train[i][j] == 1 and y_train[i] == 0:
-                theta[j,0] += 1
+    # the prior probability Pr(x_j | y=1) and Pr(x_j | y=0). This is
+    # equivalent to training the Bernoulli NB model
+    for j in range(0, m):
+        for i in range(0, n):
+            if X_train[i, j] == 1 and y_train[i] == 1:
+                theta_mat[j,1] += 1
+            elif X_train[i, j] == 1 and y_train[i] == 0:
+                theta_mat[j,0] += 1
         # Computing priors and implementing Laplace smoothing
-        theta[j, 1] = (theta[j, 1] + 1) / (sum(y_train) + 2)
-        theta[j, 0] = (theta[j, 0] + 1) / (n - sum(y_train) + 2)
+        theta_mat[j, 1] = (theta_mat[j, 1] + 1) / (sum(y_train) + 2)
+        theta_mat[j, 0] = (theta_mat[j, 0] + 1) / (n - sum(y_train) + 2)
     theta_1 = sum(y_train) / n
     theta_0 = 1 - theta_1
 
     # Now that the Bernoulli Naive Bayes is trained, we can use it to predict
-    # classes on the new instances
+    # classes on the new instances (i.e. X_val or X_test)
 
     # Define # of instances and features in X_train for future use
-    n_new = len(X_train)    # number of instances
-    m_new = len(X_train[0]) # number of features
+    n_new = len(X_new)    # number of instances
+    m_new = len(X_new[0]) # number of features
 
-    for i in range(0,n_new):
+    # Instantiating the y_predict vector
+    y_predict = np.zeros(n_new)
+
+    for i in range(0, n_new):
         a_0 = 0
         a_1 = 0
-        for j in range(0,m_new):
-            a_0 = a_0 + X_new[i, j]*math.log(theta[j, 0]) \
-                  + (1 - X_new[i, j]) * math.log(1-theta[j, 0])
-            a_1 = a_1 + X_new[i, j]*math.log(theta[j, 1]) \
-                  + (1 - X_new[i, j]) * math.log(1-theta[j, 1])
+        for j in range(0, m_new):
+            a_0 = a_0 + X_new[i, j] * math.log(theta_mat[j, 0]) \
+                  + (1 - X_new[i, j]) * math.log(1-theta_mat[j, 0])
+
+            a_1 = a_1 + X_new[i, j] * math.log(theta_mat[j, 1]) \
+                  + (1 - X_new[i, j]) * math.log(1-theta_mat[j, 1])
+
         a_0 = a_0 + math.log(theta_0)
         a_1 = a_1 + math.log(theta_1)
 
         # for each new instance, we pick the highest score between a_0 or
         # a_1 to predict the class
 
-        y_predict = []
         if a_1 >= a_0:
-            y_predict.append(1)
-        else:
-            y_predict.append(0)
+            y_predict[i] = 1
 
     return y_predict
 
-theta = bayesprobmatrix(poscomments, negcomments, word_160pos)
-#print(bayesprobmatrix(poscomments, negcomments, word_160pos))
+
+# Creating training feature matrix and target vector
+X, y = bayes_training_set(poscomments, negcomments, word_160pos)
+
+# Splitting them so as to have validation sets
+X_train, X_val, y_train, y_val = train_test_split(X, y, train_size=0.8, \
+                                                  test_size=0.2)
+
+# Fitting a Bernoulli NB model and using it to predict labels on validation set
+y_predict = bern_naive_bayes(X_train, y_train, X_val)
+score = accuracy_score(y_val, y_predict)
+print("NB accuracy: ", score)
