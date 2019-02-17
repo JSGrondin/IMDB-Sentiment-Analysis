@@ -107,9 +107,6 @@ def bern_naive_bayes(X_train, y_train):
     # -X_train, a feature matrix (size n x m), which is composed of
     # binary variables (0, 1);
     # -y_train (n), target vector composed of binary variables (0, 1).
-    # -X_new is a feature matrix (size n2 x m2), which is also composed of
-    # binary variables (0, 1) and for which we want to predict labels using
-    # the newly trained NB model
 
     # Define # of instances and features in X_train for future use
     n = len(X_train)    # number of instances
@@ -128,13 +125,11 @@ def bern_naive_bayes(X_train, y_train):
             elif X_train[i, j] == 1 and y_train[i] == 0:
                 theta_mat[j,0] += 1
         # Computing priors and implementing Laplace smoothing
-        theta_mat[j, 1] = (theta_mat[j, 1] + 1) / (sum(y_train) + 2)
-        theta_mat[j, 0] = (theta_mat[j, 0] + 1) / (n - sum(y_train) + 2)
+        theta_mat[j, 1] = (theta_mat[j, 1] + 0) / (sum(y_train) + 0)
+        theta_mat[j, 0] = (theta_mat[j, 0] + 0) / (n - sum(y_train) + 0)
     theta_1 = sum(y_train) / n
     theta_0 = 1 - theta_1
 
-    # Now that the Bernoulli Naive Bayes is trained, we can use it to predict
-    # classes on the new instances (i.e. X_val or X_test)
     return theta_mat, theta_0, theta_1
 
 
@@ -147,22 +142,16 @@ def predict(X_new, theta_mat, theta_0, theta_1):
     y_predict = np.zeros(n_new)
 
     for i in range(0, n_new):
-        a_0 = 0
-        a_1 = 0
+        sum=0
         for j in range(0, m_new):
-            a_0 = a_0 + X_new[i, j] * math.log(theta_mat[j, 0]) \
-                  + (1 - X_new[i, j]) * math.log(1-theta_mat[j, 0])
+            sum = sum + (X_new[i,j] * math.log(theta_mat[j,1]/theta_mat[j,
+                                                                         0])
+                          + (1-X_new[i,j]) * math.log((1-theta_mat[j,
+                                                                 1])/(
+                            1-theta_mat[j,0])))
+        delta = math.log(theta_1 / (1 - theta_1)) + sum
 
-            a_1 = a_1 + X_new[i, j] * math.log(theta_mat[j, 1]) \
-                  + (1 - X_new[i, j]) * math.log(1-theta_mat[j, 1])
-
-        a_0 = a_0 + math.log(theta_0)
-        a_1 = a_1 + math.log(theta_1)
-
-        # for each new instance, we pick the highest score between a_0 or
-        # a_1 to predict the class
-
-        if a_1 >= a_0:
+        if delta >= 0:
             y_predict[i] = 1
 
     return y_predict
