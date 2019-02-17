@@ -8,6 +8,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.naive_bayes import GaussianNB
+from sklearn.naive_bayes import BernoulliNB
 
 def extract_comments(folder):
     # Set folder:
@@ -187,3 +188,9 @@ print("NB scikit accuracy: ", score_scikit2)
 
 print("Number of mislabeled points out of a total %d points : %d",
       (X_train.shape[0],(y_val != y_pred).sum()))
+
+# Comparison Bernouilli NB
+ber = BernoulliNB().fit(X_train, y_train)
+y_pred_ber= ber.predict(X_val)
+score_scikit3 = accuracy_score(y_val, y_pred_ber)
+print("Bernoulli NB (Scikit) accuracy: ", score_scikit3)
