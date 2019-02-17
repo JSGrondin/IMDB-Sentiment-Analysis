@@ -126,8 +126,8 @@ def bern_naive_bayes(X_train, y_train):
             elif X_train[i, j] == 1 and y_train[i] == 0:
                 theta_mat[j,0] += 1
         # Computing priors and implementing Laplace smoothing
-        theta_mat[j, 1] = (theta_mat[j, 1] + 0) / (sum(y_train) + 0)
-        theta_mat[j, 0] = (theta_mat[j, 0] + 0) / (n - sum(y_train) + 0)
+        theta_mat[j, 1] = (theta_mat[j, 1] + 1) / (sum(y_train) + 2)
+        theta_mat[j, 0] = (theta_mat[j, 0] + 1) / (n - sum(y_train) + 2)
     theta_1 = sum(y_train) / n
     theta_0 = 1 - theta_1
 
