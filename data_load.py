@@ -102,7 +102,7 @@ def bayes_training_set(positive, negative, wordlist):
     return X, y
 
 
-def bern_naive_bayes(X_train, y_train, X_new):
+def bern_naive_bayes(X_train, y_train):
     # Inputs:
     # -X_train, a feature matrix (size n x m), which is composed of
     # binary variables (0, 1);
@@ -138,10 +138,10 @@ def bern_naive_bayes(X_train, y_train, X_new):
     return theta_mat, theta_0, theta_1
 
 
-    def predict(X_new, theta_mat, theta_0, theta_1):
-        # Define # of instances and features in X_train for future use
-        n_new = len(X_new)  # number of instances
-        m_new = len(X_new[0])  # number of features
+def predict(X_new, theta_mat, theta_0, theta_1):
+    # Define # of instances and features in X_train for future use
+    n_new = len(X_new)  # number of instances
+    m_new = len(X_new[0])  # number of features
 
     # Instantiating the y_predict vector
     y_predict = np.zeros(n_new)
@@ -173,10 +173,11 @@ X, y = bayes_training_set(poscomments, negcomments, word_160pos)
 
 # Splitting them so as to have validation sets
 X_train, X_val, y_train, y_val = train_test_split(X, y, train_size=0.8, \
-                                                  test_size=0.2)
+                                                  test_size=0.2,
+                                                  random_state=123)
 
 # Fitting a Bernoulli NB model and using it to predict labels on validation set
-theta_mat_val, theta_0_val, theta_1_val  = bern_naive_bayes(X_train, y_train)
+theta_mat_val, theta_0_val, theta_1_val = bern_naive_bayes(X_train, y_train)
 y_predict = predict(X_val, theta_mat_val, theta_0_val, theta_1_val)
 score = accuracy_score(y_val, y_predict)
 print("NB accuracy: ", score)
