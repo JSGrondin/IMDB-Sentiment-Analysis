@@ -6,6 +6,8 @@ import numpy as np
 import math
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.naive_bayes import GaussianNB
 
 def extract_comments(folder):
     # Set folder:
@@ -122,7 +124,7 @@ def bern_naive_bayes(X_train, y_train, X_new):
     for j in range(0, m):
         for i in range(0, n):
             if X_train[i, j] == 1 and y_train[i] == 1:
-                theta_mat[j,1] += 1
+                theta_mat[j, 1] += 1
             elif X_train[i, j] == 1 and y_train[i] == 0:
                 theta_mat[j,0] += 1
         # Computing priors and implementing Laplace smoothing
@@ -133,10 +135,13 @@ def bern_naive_bayes(X_train, y_train, X_new):
 
     # Now that the Bernoulli Naive Bayes is trained, we can use it to predict
     # classes on the new instances (i.e. X_val or X_test)
+    return theta_mat, theta_0, theta_1
 
-    # Define # of instances and features in X_train for future use
-    n_new = len(X_new)    # number of instances
-    m_new = len(X_new[0]) # number of features
+
+    def predict(X_new, theta_mat, theta_0, theta_1):
+        # Define # of instances and features in X_train for future use
+        n_new = len(X_new)  # number of instances
+        m_new = len(X_new[0])  # number of features
 
     # Instantiating the y_predict vector
     y_predict = np.zeros(n_new)
@@ -171,6 +176,24 @@ X_train, X_val, y_train, y_val = train_test_split(X, y, train_size=0.8, \
                                                   test_size=0.2)
 
 # Fitting a Bernoulli NB model and using it to predict labels on validation set
-y_predict = bern_naive_bayes(X_train, y_train, X_val)
+theta_mat_val, theta_0_val, theta_1_val  = bern_naive_bayes(X_train, y_train)
+y_predict = predict(X_val, theta_mat_val, theta_0_val, theta_1_val)
 score = accuracy_score(y_val, y_predict)
 print("NB accuracy: ", score)
+
+
+# Comparison : Multinomial NB
+clf = MultinomialNB().fit(X_train, y_train)
+scikit_predict = clf.predict(X_val)
+score_scikit = accuracy_score(y_val, scikit_predict)
+print("NB scikit accuracy: ", score_scikit)
+
+
+# Comparison Gaussian NB
+gnb = GaussianNB()
+y_pred = gnb.fit(X_train, y_train).predict(X_val)
+score_scikit2 = accuracy_score(y_val, y_pred)
+print("NB scikit accuracy: ", score_scikit2)
+
+print("Number of mislabeled points out of a total %d points : %d",
+      (X_train.shape[0],(y_val != y_pred).sum()))
