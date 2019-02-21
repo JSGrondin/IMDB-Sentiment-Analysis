@@ -76,11 +76,10 @@ def get_training_data(folder):
 
     # iterate for each file path in the list
     for fp in filepaths:
-        comment = {}
         # Open the file in read mode
         with open(fp, 'r', encoding="utf8") as f:
             # Read the first line of the file
-            comment = f.read().lower()
+            comment = f.read()
         commentlist.append(comment)
             # Append the first line into the headers-list
 
@@ -102,11 +101,10 @@ def get_training_data(folder):
 
     # iterate for each file path in the list
     for fp in filepaths:
-        comment = {}
         # Open the file in read mode
         with open(fp, 'r', encoding="utf8") as f:
             # Read the first line of the file
-            comment= f.read().lower()
+            comment = f.read()
         commentlist2.append(comment)
         # Append the first line into the headers-list
 
@@ -140,7 +138,7 @@ def get_test_data(folder):
         # Open the file in read mode
         with open(fp, 'r', encoding="utf8") as f:
             # Read the first line of the file
-            comment = f.read().lower()
+            comment = f.read()
         commentlist.append(comment)
         IDlist.append(int(ID))
             # Append the first line into the headers-list
@@ -150,6 +148,11 @@ def get_test_data(folder):
     X_id = np.asarray(IDlist)
 
     return X, X_id
+
+def lower_text(X):
+    for i, text in enumerate(X):
+        X[i] = text.lower()
+    return X
 
 # From: https://scikit-learn.org/stable/auto_examples/model_selection/plot_randomized_search.html
 def report(results, n_top=3):
