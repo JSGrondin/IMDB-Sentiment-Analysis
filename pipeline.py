@@ -47,10 +47,10 @@ seed = 123
 # finding the optimial hyperparameters for each classifier and assessing
 # different ensembling stacking metamodels. Then we retrain
 # on the full training + validation set
-X_train, X_val, y_train, y_val = train_test_split(X_train, y_train,
-                                                 train_size=0.9, \
-                                                 test_size=0.1,
-                                                 random_state=seed)
+# X_train, X_val, y_train, y_val = train_test_split(X_train, y_train,
+#                                                  train_size=0.9, \
+#                                                  test_size=0.1,
+#                                                  random_state=seed)
 
 ###########################################################
 #              VADER sentiment Analyzer                   #
@@ -63,7 +63,7 @@ X_train, X_val, y_train, y_val = train_test_split(X_train, y_train,
 nltk.download('vader_lexicon')
 vader = SentimentIntensityAnalyzer()
 y_vader_pred_train = np.zeros(len(y_train))
-y_vader_pred_val = np.zeros(len(y_val))
+# y_vader_pred_val = np.zeros(len(y_val))
 y_vader_pred = np.zeros(len(X_test))
 
 
@@ -76,10 +76,10 @@ def vader_polarity(text):
 for i, text in enumerate(X_train):
     y_vader_pred_train[i] = vader_polarity(text)
 
-for i, text in enumerate(X_val):
-    y_vader_pred_val[i] = vader_polarity(text)
+# for i, text in enumerate(X_val):
+#     y_vader_pred_val[i] = vader_polarity(text)
 
-accuracy_score(y_val, y_vader_pred_val) # 0.6944
+# accuracy_score(y_val, y_vader_pred_val) # 0.6944
 
 for i, text in enumerate(X_test):
     y_vader_pred[i] = vader_polarity(text)
@@ -90,12 +90,12 @@ for i, text in enumerate(X_test):
 
 # Removing capital letters, i.e lowering all strings
 X_train = lower_text(X_train)
-X_val = lower_text(X_val)
+# X_val = lower_text(X_val)
 X_test = lower_text(X_test)
 
 # Removing special characters
 X_train = char_preprocessing(X_train)
-X_val = char_preprocessing(X_val)
+# X_val = char_preprocessing(X_val)
 X_test = char_preprocessing(X_test)
 
 # with open('your_file.txt', 'w', encoding="utf-8") as f:
@@ -104,7 +104,7 @@ X_test = char_preprocessing(X_test)
 
 # Processing text features on Xtrain, X_val and X_test
 X_train = lemmatization_stem_and_stopwords(X_train,True,True,False)
-X_val = lemmatization_stem_and_stopwords(X_val,True,True,False)
+# X_val = lemmatization_stem_and_stopwords(X_val,True,True,False)
 X_test = lemmatization_stem_and_stopwords(X_test,True,True,False)
 
 
@@ -149,9 +149,9 @@ pclf_LR = Pipeline([
 
 # Training optimal logistic regression model
 pclf_LR.fit(X_train, y_train)
-y_LR_pred_train = pclf_LR.predict(X_train) # required for ensembling method
-y_LR_pred_val = pclf_LR.predict(X_val)
-accuracy_score(y_val, y_LR_pred_val)  #0.8896
+# y_LR_pred_train = pclf_LR.predict(X_train) # required for ensembling method
+# y_LR_pred_val = pclf_LR.predict(X_val)
+# accuracy_score(y_val, y_LR_pred_val)  #0.8896
 y_LR_pred = pclf_LR.predict(X_test)
 
 ###########################################################
@@ -192,11 +192,11 @@ pclf_SVC = Pipeline([
 
 # Training optimal logistic regression model
 pclf_SVC.fit(X_train, y_train)
-y_LSVC_pred_train = pclf_SVC.predict(X_train) # required for ensembling method
-y_LSVC_pred_val = pclf_SVC.predict(X_val)
-accuracy_score(y_val, y_LSVC_pred_val)  #0.9032
+# y_LSVC_pred_train = pclf_SVC.predict(X_train) # required for ensembling method
+# y_LSVC_pred_val = pclf_SVC.predict(X_val)
+# accuracy_score(y_val, y_LSVC_pred_val)  #0.9032
 y_LSVC_pred = pclf_SVC.predict(X_test)
-
+my_prediction = pclf_SVC.predict(X_test)
 
 ###########################################################
 #                Multinomial Naive Bayes                  #
@@ -234,9 +234,9 @@ pclf_NB = Pipeline([
 
 # Training optimal logistic regression model
 pclf_NB.fit(X_train, y_train)
-y_NB_pred_train = pclf_NB.predict(X_train) # required for ensembling method
-y_NB_pred_val = pclf_NB.predict(X_val)
-accuracy_score(y_val, y_NB_pred_val)  #0.8968
+# y_NB_pred_train = pclf_NB.predict(X_train) # required for ensembling method
+# y_NB_pred_val = pclf_NB.predict(X_val)
+# accuracy_score(y_val, y_NB_pred_val)  #0.8968
 y_NB_pred = pclf_NB.predict(X_test)
 
 ###########################################################
@@ -249,91 +249,152 @@ y_NB_pred = pclf_NB.predict(X_test)
 # will be used: a voting model and a logistic regression model.
 
 # Combining prediction vectors from each model (including VADER)
-X_combined = np.vstack((y_vader_pred_val, y_LR_pred_val, y_LSVC_pred_val,
-                        y_NB_pred_val)).T
-y_ensemble_pred = np.zeros(len(X_combined))
-
-for i in range(len(X_combined)):
-    if sum(X_combined[i]) >= 3:
-        y_ensemble_pred[i] = 1
-    elif sum(X_combined[i]) <= 1:
-        y_ensemble_pred[i] = 0
-    else:
-        y_ensemble_pred[i] = X_combined[i,2]   # in case of tie, we select
-        # the LSVC prediction as it is the strongest model
-
-accuracy_score(y_val, y_ensemble_pred)  #0.902
+# X_combined = np.vstack((y_vader_pred_val, y_LR_pred_val, y_LSVC_pred_val,
+#                         y_NB_pred_val)).T
+# y_ensemble_pred = np.zeros(len(X_combined))
+#
+# for i in range(len(X_combined)):
+#     if sum(X_combined[i]) >= 3:
+#         y_ensemble_pred[i] = 1
+#     elif sum(X_combined[i]) <= 1:
+#         y_ensemble_pred[i] = 0
+#     else:
+#         y_ensemble_pred[i] = X_combined[i,2]   # in case of tie, we select
+#         # the LSVC prediction as it is the strongest model
+#
+# accuracy_score(y_val, y_ensemble_pred)  #0.902
 
 # Combining prediction vectors from each model (excluding VADER)
-X_combined = np.vstack((y_LR_pred_val, y_LSVC_pred_val,
-                        y_NB_pred_val)).T
-y_ensemble_pred = np.zeros(len(X_combined))
-
-for i in range(len(X_combined)):
-    if sum(X_combined[i]) >= 2:
-        y_ensemble_pred[i] = 1
-    else:
-        y_ensemble_pred[i] = 0
-
-accuracy_score(y_val, y_ensemble_pred)  #0.900
+# X_combined = np.vstack((y_LR_pred_val, y_LSVC_pred_val,
+#                         y_NB_pred_val)).T
+# y_ensemble_pred = np.zeros(len(X_combined))
+#
+# for i in range(len(X_combined)):
+#     if sum(X_combined[i]) >= 2:
+#         y_ensemble_pred[i] = 1
+#     else:
+#         y_ensemble_pred[i] = 0
+#
+# accuracy_score(y_val, y_ensemble_pred)  #0.900
 
 # Training a logistic regression model - using training set
-X_combined_train = np.vstack((y_vader_pred_train, y_LR_pred_train,
-                         y_LSVC_pred_train,
-                        y_NB_pred_train)).T
-X_combined_val = np.vstack((y_vader_pred_val, y_LR_pred_val,
-                         y_LSVC_pred_val,
-                        y_NB_pred_val)).T
-y_ensemble_pred = np.zeros(len(X_combined_val))
+# X_combined_train = np.vstack((y_vader_pred_train, y_LR_pred_train,
+#                          y_LSVC_pred_train,
+#                         y_NB_pred_train)).T
+# X_combined_val = np.vstack((y_vader_pred_val, y_LR_pred_val,
+#                          y_LSVC_pred_val,
+#                         y_NB_pred_val)).T
+# y_ensemble_pred = np.zeros(len(X_combined_val))
+#
+# for c in [0.01, 0.05, 0.25, 0.5, 1]:
+#     lr = LogisticRegression(C=c)
+#     lr.fit(X_combined_train, y_train)
+#     print("Accuracy for C=%s: %s" % (c, accuracy_score(y_val, lr.predict(
+#         X_combined_val))))
 
-for c in [0.01, 0.05, 0.25, 0.5, 1]:
-    lr = LogisticRegression(C=c)
-    lr.fit(X_combined_train, y_train)
-    print("Accuracy for C=%s: %s" % (c, accuracy_score(y_val, lr.predict(
-        X_combined_val))))
 
-
-# Training a logistic regression model - using training set and including
+# Training a logistic regression metamodel - using training set and including
 # interaction terms
-X_combined_train = np.vstack((y_vader_pred_train, y_LR_pred_train,
-                         y_LSVC_pred_train,
-                        y_NB_pred_train, y_vader_pred_train*y_LR_pred_train,
-                         y_vader_pred_train*y_LSVC_pred_train,
-                              y_vader_pred_train*y_NB_pred_train,
-                              y_LR_pred_train*y_LSVC_pred_train,
-                              y_LR_pred_train*y_NB_pred_train,
-                              y_LSVC_pred_train*y_NB_pred_train)).T
+# X_combined_train = np.vstack((y_vader_pred_train, y_LR_pred_train,
+#                          y_LSVC_pred_train,
+#                         y_NB_pred_train, y_vader_pred_train*y_LR_pred_train,
+#                          y_vader_pred_train*y_LSVC_pred_train,
+#                               y_vader_pred_train*y_NB_pred_train,
+#                               y_LR_pred_train*y_LSVC_pred_train,
+#                               y_LR_pred_train*y_NB_pred_train,
+#                               y_LSVC_pred_train*y_NB_pred_train)).T
 
-X_combined_val = np.vstack((y_vader_pred_val, y_LR_pred_val,
-                         y_LSVC_pred_val,
-                        y_NB_pred_val, y_vader_pred_val*y_LR_pred_val,
-                         y_vader_pred_val*y_LSVC_pred_val,
-                              y_vader_pred_val*y_NB_pred_val,
-                              y_LR_pred_val*y_LSVC_pred_val,
-                              y_LR_pred_val*y_NB_pred_val,
-                              y_LSVC_pred_val*y_NB_pred_val)).T
-y_ensemble_pred = np.zeros(len(X_combined_val))
-
-for c in [0.01, 0.05, 0.25, 0.5, 1, 2, 3, 4, 5]:
-    lr = LogisticRegression(C=c)
-    lr.fit(X_combined_train, y_train)
-    print("Accuracy for C=%s: %s" % (c, accuracy_score(y_val, lr.predict(
-        X_combined_val))))
+# X_combined_val = np.vstack((y_vader_pred_val, y_LR_pred_val,
+#                          y_LSVC_pred_val,
+#                         y_NB_pred_val, y_vader_pred_val*y_LR_pred_val,
+#                          y_vader_pred_val*y_LSVC_pred_val,
+#                               y_vader_pred_val*y_NB_pred_val,
+#                               y_LR_pred_val*y_LSVC_pred_val,
+#                               y_LR_pred_val*y_NB_pred_val,
+#                               y_LSVC_pred_val*y_NB_pred_val)).T
+# y_ensemble_pred = np.zeros(len(X_combined_val))
+#
+# for c in [0.01, 0.05, 0.25, 0.5, 1]:
+#     lr = LogisticRegression(C=c)
+#     lr.fit(X_combined_train, y_train)
+#     print("Accuracy for C=%s: %s" % (c, accuracy_score(y_val, lr.predict(
+#         X_combined_val))))
 
 # Accuracy for C=0.01: 0.9
 # Accuracy for C=0.05: 0.9016
 # Accuracy for C=0.25: 0.9036
 # Accuracy for C=0.5: 0.9036
 # Accuracy for C=1: 0.9044
-# Accuracy for C=2: 0.9044
-# Accuracy for C=3: 0.9044
-# Accuracy for C=4: 0.9044
-# Accuracy for C=5: 0.9044
 
+# Training a logistic regression metamodel - excluding VADER (weekest model) 
+# and including interaction terms
+# X_combined_train = np.vstack((y_LR_pred_train,
+#                          y_LSVC_pred_train,
+#                         y_NB_pred_train,
+#                               y_LR_pred_train*y_LSVC_pred_train,
+#                               y_LR_pred_train*y_NB_pred_train,
+#                               y_LSVC_pred_train*y_NB_pred_train)).T
+#
+# X_combined_val = np.vstack((y_LR_pred_val,
+#                          y_LSVC_pred_val,
+#                         y_NB_pred_val,
+#                               y_LR_pred_val*y_LSVC_pred_val,
+#                               y_LR_pred_val*y_NB_pred_val,
+#                               y_LSVC_pred_val*y_NB_pred_val)).T
+# y_ensemble_pred = np.zeros(len(X_combined_val))
+#
+# for c in [0.01, 0.05, 0.25, 0.5, 1]:
+#     lr = LogisticRegression(C=c)
+#     lr.fit(X_combined_train, y_train)
+#     print("Accuracy for C=%s: %s" % (c, accuracy_score(y_val, lr.predict(
+#         X_combined_val))))
+
+# Accuracy for C=0.01: 0.9
+# Accuracy for C=0.05: 0.9
+# Accuracy for C=0.25: 0.9044
+# Accuracy for C=0.5: 0.9044
+# Accuracy for C=1: 0.9044
+
+
+# Training a logistic regression metamodel - excluding VADER (weekest model)
+# and excluding interaction terms
+# X_combined_train = np.vstack((y_LR_pred_train,
+#                          y_LSVC_pred_train,
+#                         y_NB_pred_train)).T
+#
+# X_combined_val = np.vstack((y_LR_pred_val,
+#                          y_LSVC_pred_val,
+#                         y_NB_pred_val)).T
+# y_ensemble_pred = np.zeros(len(X_combined_val))
+#
+# for c in [0.01, 0.05, 0.25, 0.5, 1]:
+#     lr = LogisticRegression(C=c)
+#     lr.fit(X_combined_train, y_train)
+#     print("Accuracy for C=%s: %s" % (c, accuracy_score(y_val, lr.predict(
+#         X_combined_val))))
+
+# Accuracy for C=0.01: 0.9
+# Accuracy for C=0.05: 0.9
+# Accuracy for C=0.25: 0.9
+# Accuracy for C=0.5: 0.9
+# Accuracy for C=1: 0.9
+
+# X_combined_test = np.vstack((y_vader_pred, y_LR_pred,
+#                          y_LSVC_pred,
+#                         y_NB_pred, y_vader_pred*y_LR_pred,
+#                          y_vader_pred*y_LSVC_pred,
+#                               y_vader_pred*y_NB_pred,
+#                               y_LR_pred*y_LSVC_pred,
+#                               y_LR_pred*y_NB_pred,
+#                               y_LSVC_pred*y_NB_pred)).T
+
+# Training best ensembling model
+# lr = LogisticRegression(C=1)
+# lr.fit(X_combined_train, y_train)
 
 
 # Predicting categories on test set and saving results as csv, ready for Kaggle
-my_prediction = random_search.predict(X_test)
+#my_prediction = lr.predict(X_combined_test)
 my_prediction = np.array(my_prediction).astype(int)
 my_solution = pd.DataFrame(my_prediction, X_test_Id, columns = ['Category'])
 

@@ -100,15 +100,16 @@ print(poscomments[10000])
 # Creating list of popular words
 word_160neg = WordListing(negcomments, 160)
 word_160pos = WordListing(poscomments, 160)
+word_all = WordListing(negcomments+poscomments, 1000)
 print(word_160neg)
 print(word_160pos)
 
 # Creating training feature matrix and target vector
-X, y = bern_nb_training_set(poscomments, negcomments, word_160pos)
+X, y = bern_nb_training_set(poscomments, negcomments, word_all)
 
 # Splitting them so as to have validation sets
-X_train, X_val, y_train, y_val = train_test_split(X, y, train_size=0.8, \
-                                                  test_size=0.2,
+X_train, X_val, y_train, y_val = train_test_split(X, y, train_size=0.9, \
+                                                  test_size=0.1,
                                                   random_state=123)
 
 # Fitting a Bernoulli NB model and using it to predict labels on validation set
